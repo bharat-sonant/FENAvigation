@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/custom_marker_view"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    >
+
+    <TextView
+        android:layout_marginRight="3dp"
+        android:id="@+id/haltTimeTV"
+        android:textColor="#000"
+        android:background="@drawable/outline_bg_map"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="30"
+        android:textAlignment="center"
+        android:layout_gravity="right"
+        android:elevation="10dp"/>
+
+    <ImageView
+        android:layout_marginTop="8dp"
+        android:layout_marginRight="5dp"
+        android:id="@+id/profile_image"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center_horizontal"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_capture_image_loc" />
+
+</FrameLayout>
