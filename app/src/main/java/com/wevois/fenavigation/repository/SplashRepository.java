@@ -4,6 +4,7 @@ import static android.content.Context.MODE_PRIVATE;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
+import android.util.Log;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -46,6 +47,20 @@ public class SplashRepository {
                     if (dataSnapshot.hasChild("halt-distance-covered-check-interval-in-second")) {
                         preferences.edit().putInt("distanceCoveredCheckInterval", Integer.parseInt(dataSnapshot.child("halt-distance-covered-check-interval-in-second").getValue().toString())).apply();
                     }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+        common.getDatabaseForApplication(activity).child("WastebinMonitor/FieldExecutive/"+preferences.getString("uid","")+"/isAppOpen").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.getValue() != null) {
+                    preferences.edit().putString("isAppOpen", dataSnapshot.getValue().toString()).apply();
                 }
             }
 

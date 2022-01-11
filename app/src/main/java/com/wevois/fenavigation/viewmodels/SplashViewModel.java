@@ -36,24 +36,24 @@ public class SplashViewModel extends ViewModel {
     SplashRepository repository = new SplashRepository();
     Handler handler;
 
-    public void init(SplashScreen activitys)    {
+    public void init(SplashScreen activitys) {
         activity = activitys;
         preferences = activity.getSharedPreferences("FirebasePath", MODE_PRIVATE);
-        preferences.edit().putString("dbPath", "https://iejaipurgreater.firebaseio.com/").apply();
-        preferences.edit().putString("storagePath", "gs://dtdnavigator.appspot.com/Jaipur-Greater").apply();
-//        preferences.edit().putString("dbPath", "https://dtdnavigatortesting.firebaseio.com/").apply();
-//        preferences.edit().putString("storagePath", "gs://dtdnavigator.appspot.com/Test").apply();
+//        preferences.edit().putString("dbPath", "https://iejaipurgreater.firebaseio.com/").apply();
+//        preferences.edit().putString("storagePath", "gs://dtdnavigator.appspot.com/Jaipur-Greater").apply();
+        preferences.edit().putString("dbPath", "https://dtdnavigatortesting.firebaseio.com/").apply();
+        preferences.edit().putString("storagePath", "gs://dtdnavigator.appspot.com/Test").apply();
         repository.getSettingsData(activity);
         checkPermission();
     }
 
     public void checkPermission() {
-            if (ActivityCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                    || ActivityCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
-                    ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(activity, PERMISSION, 500);
-                return;
-            }
+        if (ActivityCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                || ActivityCompat.checkSelfPermission(activity, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED ||
+                ActivityCompat.checkSelfPermission(activity, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(activity, PERMISSION, 500);
+            return;
+        }
         callTimer();
     }
 
@@ -70,7 +70,7 @@ public class SplashViewModel extends ViewModel {
     }
 
     private void checkNetwork() {
-        common.checkNetWork(activity).observeForever(result->{
+        common.checkNetWork(activity).observeForever(result -> {
             if (result) {
                 common.getDatabaseForApplication(activity).child("Settings/LatestVersions/fENavigation").addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
@@ -105,8 +105,8 @@ public class SplashViewModel extends ViewModel {
 
                     }
                 });
-            }else {
-                if (handler==null) {
+            } else {
+                if (handler == null) {
                     common.setProgressBar("No internet connection.", activity, activity);
                 }
                 handler = new Handler();

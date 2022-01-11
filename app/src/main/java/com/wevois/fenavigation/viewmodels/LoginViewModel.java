@@ -77,8 +77,8 @@ public class LoginViewModel extends ViewModel {
                             hashMap.put("email", user.getEmail());
                             hashMap.put("name", user.getDisplayName());
                             hashMap.put("date", common.date());
-                            common.getDatabaseForApplication(activity).child("WastebinMonitor/Users/" + user.getUid() + "/").setValue(hashMap);
-                            common.getDatabaseForApplication(activity).child("WastebinMonitor/FieldExecutive/" + user.getUid() + "/").setValue(hashMap);
+                            common.getDatabaseForApplication(activity).child("WastebinMonitor/Users/" + user.getUid() + "/").updateChildren(hashMap);
+                            common.getDatabaseForApplication(activity).child("WastebinMonitor/FieldExecutive/" + user.getUid() + "/").updateChildren(hashMap);
                         }else {
                             common.getDatabaseForApplication(activity).child("WastebinMonitor/FieldExecutive/" + user.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
                                 @Override
@@ -88,7 +88,7 @@ public class LoginViewModel extends ViewModel {
                                         hashMap.put("email", user.getEmail());
                                         hashMap.put("name", user.getDisplayName());
                                         hashMap.put("date", common.date());
-                                        common.getDatabaseForApplication(activity).child("WastebinMonitor/FieldExecutive/" + user.getUid() + "/").setValue(hashMap);
+                                        common.getDatabaseForApplication(activity).child("WastebinMonitor/FieldExecutive/" + user.getUid() + "/").updateChildren(hashMap);
                                     }
                                 }
 
