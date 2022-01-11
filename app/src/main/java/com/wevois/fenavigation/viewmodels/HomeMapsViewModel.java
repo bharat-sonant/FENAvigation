@@ -2,6 +2,8 @@ package com.wevois.fenavigation.viewmodels;
 
 import static android.content.Context.MODE_PRIVATE;
 
+import static com.google.firebase.crashlytics.internal.Logger.TAG;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -41,6 +43,7 @@ import android.view.animation.Interpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
@@ -61,6 +64,8 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.ValueEventListener;
 import com.wevois.fenavigation.CommonMethods;
 import com.wevois.fenavigation.Model;
 import com.wevois.fenavigation.R;
@@ -75,6 +80,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Locale;
@@ -101,7 +107,7 @@ public class HomeMapsViewModel extends ViewModel {
     SharedPreferences preferences;
     public static JSONObject jsonObjectLocationHistory = new JSONObject(), jsonObjectHalt = new JSONObject();
     ArrayList<LatLng> directionPositionList = new ArrayList<>();
-    Polyline polyline;
+    Polyline polyline, polyLine1;
     HashMap<String, Marker> haltMarker = new HashMap<>();
     private View mCustomMarkerView;
     private ImageView mMarkerImageView;
@@ -135,6 +141,47 @@ public class HomeMapsViewModel extends ViewModel {
                 }
             });
         }
+        Trackingline();
+
+    }
+
+    private void Trackingline(){
+        Date date1 = new Date(System.currentTimeMillis() - (1000 * 60 * 60 * 24));
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        String date = sdf.format(date1);
+        String monthname1 = common.monthName();
+        String yearname = common.year();
+        Log.d(TAG, "onDataChange: Amit " + date);
+        common.getDatabaseForApplication(activity).child("LocationHistory").child(preferences.getString("uid", " ")).child("" + yearname).child("" +
+                monthname1).child("" + date).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                ArrayList<LatLng> data1 = new ArrayList<>();
+                if (snapshot.getValue() != null) {
+                    for (DataSnapshot dataSnapshot : snapshot.getChildren()) {
+                        if (dataSnapshot.hasChild("lat-lng")) {
+                            String[] data = dataSnapshot.child("lat-lng").getValue().toString().split("~");
+                            for (int i = 0; i < data.length; i++) {
+                                String[] latLngs = data[i].substring(1, data[i].length() - 1).split(",");
+                                Log.d(TAG, "onDataChange: ABC" + latLngs);
+                                if (Double.parseDouble(latLngs[0].trim()) != 0.0 && Double.parseDouble(latLngs[1].trim()) != 0.0) {
+                                    data1.add(new LatLng(Double.parseDouble(latLngs[0].trim()), Double.parseDouble(latLngs[1].trim())));
+                                    Log.d(TAG, "onDataChange: ABBS" + data1);
+                                }
+                            }
+                        }
+                        Log.d(TAG, "onDataChange: C " + data1);
+                    }
+                    Log.d(TAG, "onDataChange: C " + data1);
+                    showLineOnMap(data1, false);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
 
 
     }
@@ -432,7 +479,7 @@ public class HomeMapsViewModel extends ViewModel {
                         e.printStackTrace();
                     }
                 }
-                showLineOnMap(directionPositionList);
+                showLineOnMap(directionPositionList, true);
                 return null;
             }
         }.execute();
@@ -657,7 +704,7 @@ public class HomeMapsViewModel extends ViewModel {
                                                     }
                                                 }
                                             }
-                                            showLineOnMap(directionPositionList);
+                                            showLineOnMap(directionPositionList, true);
                                         } else {
                                             clearPreviousLocationDataOnMap();
                                         }
@@ -733,13 +780,17 @@ public class HomeMapsViewModel extends ViewModel {
         }
     }
 
-    public void showLineOnMap(ArrayList<LatLng> distance) {
+    public void showLineOnMap(ArrayList<LatLng> distance, boolean b) {
         activity.runOnUiThread(() -> {
-            try {
-                polyline.remove();
-            } catch (Exception e) {
+            if(b){
+                try {
+                    polyline.remove();
+                } catch (Exception e) {
+                }
+                polyline = mMap.addPolyline(new PolylineOptions().addAll((distance)).color(Color.GREEN));
+            } else {
+                polyLine1 = mMap.addPolyline(new PolylineOptions().addAll((distance)).color(Color.GRAY));
             }
-            polyline = mMap.addPolyline(new PolylineOptions().addAll((distance)).color(Color.GREEN));
             common.closeDialog(activity);
             if (preferences.getString("dutyOff", "").equalsIgnoreCase(common.date())) {
                 LatLngBounds.Builder builder = new LatLngBounds.Builder();

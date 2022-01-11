@@ -39,10 +39,10 @@ public class SplashViewModel extends ViewModel {
     public void init(SplashScreen activitys) {
         activity = activitys;
         preferences = activity.getSharedPreferences("FirebasePath", MODE_PRIVATE);
-//        preferences.edit().putString("dbPath", "https://iejaipurgreater.firebaseio.com/").apply();
-//        preferences.edit().putString("storagePath", "gs://dtdnavigator.appspot.com/Jaipur-Greater").apply();
-        preferences.edit().putString("dbPath", "https://dtdnavigatortesting.firebaseio.com/").apply();
-        preferences.edit().putString("storagePath", "gs://dtdnavigator.appspot.com/Test").apply();
+        preferences.edit().putString("dbPath", "https://iejaipurgreater.firebaseio.com/").apply();
+        preferences.edit().putString("storagePath", "gs://dtdnavigator.appspot.com/Jaipur-Greater").apply();
+//        preferences.edit().putString("dbPath", "https://dtdnavigatortesting.firebaseio.com/").apply();
+//        preferences.edit().putString("storagePath", "gs://dtdnavigator.appspot.com/Test").apply();
         repository.getSettingsData(activity);
         checkPermission();
     }
