@@ -74,18 +74,41 @@
                     android:textColor="#000"
                     android:textSize="10dp" />
             </LinearLayout>
-            <Button
-                android:id="@+id/filters_btn"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
-                android:padding="10dp"
-                android:gravity="center|right"
-                android:layout_gravity="right"
-                android:background="@drawable/address_background_shape"
-                android:text="@{homemapsviewmodel.timeDate}"
-                android:onClick="@{()->homemapsviewmodel.datePicker()}"
-                app:layout_constraintEnd_toEndOf="parent"/>
+                android:gravity="center|left"
+                android:layout_gravity="left"
+                android:orientation="horizontal"
+                android:weightSum="10">
+                <Button
+                    android:id="@+id/text_btn"
+                    android:layout_width="0dp"
+                    android:layout_weight="10"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="10dp"
+                    android:padding="10dp"
+                    android:gravity="center|left"
+                    android:layout_gravity="left"
+                    android:background="@drawable/address_background_shape"
+                    android:text="@{homemapsviewmodel.textTv}"
+                    android:onClick="@{()->homemapsviewmodel.datePicker()}"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+                <Button
+                    android:id="@+id/filters_btn"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="10dp"
+                    android:padding="10dp"
+                    android:gravity="center|right"
+                    android:layout_gravity="right"
+                    android:background="@drawable/address_background_shape"
+                    android:text="@{homemapsviewmodel.timeDate}"
+                    android:onClick="@{()->homemapsviewmodel.datePicker()}"
+                    app:layout_constraintEnd_toEndOf="parent"/>
+            </LinearLayout>
+
             <LinearLayout
                 android:layout_width="50dp"
                 android:layout_height="50dp"

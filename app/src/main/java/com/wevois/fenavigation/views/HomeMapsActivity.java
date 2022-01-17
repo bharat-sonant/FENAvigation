@@ -4,6 +4,7 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.FragmentActivity;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelProviders;
 
 import android.annotation.TargetApi;
@@ -13,6 +14,7 @@ import android.app.PictureInPictureParams;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.graphics.Point;
 import android.net.Uri;
 import android.os.Build;
@@ -27,27 +29,22 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.wevois.fenavigation.CommonMethods;
 import com.wevois.fenavigation.R;
 import com.wevois.fenavigation.databinding.ActivityHomeMapsBinding;
+import com.wevois.fenavigation.viewmodelfactory.HomeMapsViewModelFactory;
 import com.wevois.fenavigation.viewmodels.HomeMapsViewModel;
 
 public class HomeMapsActivity extends AppCompatActivity {
     private ActivityHomeMapsBinding binding;
     HomeMapsViewModel viewModel;
-    SupportMapFragment fragment;
-    SharedPreferences preferences;
-    CommonMethods common = CommonMethods.getInstance();
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        preferences = getSharedPreferences("FirebasePath", MODE_PRIVATE);
         binding = DataBindingUtil.setContentView(this, R.layout.activity_home_maps);
-        viewModel = ViewModelProviders.of(this).get(HomeMapsViewModel.class);
+        viewModel = new ViewModelProvider(this, new HomeMapsViewModelFactory(this,(SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map))).get(HomeMapsViewModel.class);
         binding.setHomemapsviewmodel(viewModel);
         binding.setLifecycleOwner(this);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        fragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
-        viewModel.init(this, fragment);
         checkPermission();
     }
 
@@ -86,20 +83,14 @@ public class HomeMapsActivity extends AppCompatActivity {
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public void onBackPressed() {
-        pictureInPictureMethod();
+        viewModel.back();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     protected void onStop() {
         super.onStop();
-        if (!preferences.getString("dutyOff", "").equalsIgnoreCase(common.date()) && preferences.getString("dutyIn", "").equalsIgnoreCase(common.date())) {
-            Intent rIntent = new Intent(this, HomeMapsActivity.class);
-            rIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-            PendingIntent intent = PendingIntent.getActivity(this, 0, rIntent, PendingIntent.FLAG_IMMUTABLE);
-            AlarmManager manager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-            manager.set(AlarmManager.RTC, System.currentTimeMillis(), intent);
-        }
+        viewModel.stop();
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -107,21 +98,10 @@ public class HomeMapsActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         viewModel.pause();
-        pictureInPictureMethod();
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.O)
-    private void pictureInPictureMethod() {
-        if (!preferences.getString("dutyOff", "").equalsIgnoreCase(common.date()) && preferences.getString("dutyIn", "").equalsIgnoreCase(common.date())) {
-            Display d = getWindowManager().getDefaultDisplay();
-            Point p = new Point();
-            d.getSize(p);
-            int width = p.x;
-            int height = p.y;
-            Rational ratio = new Rational(width, height);
-            PictureInPictureParams.Builder pip_Builder = new PictureInPictureParams.Builder();
-            pip_Builder.setAspectRatio(ratio).build();
-            enterPictureInPictureMode();
-        }
+    @Override
+    public void onPictureInPictureModeChanged (boolean isInPictureInPictureMode, Configuration newConfig) {
+        viewModel.pictureInPictureMode(isInPictureInPictureMode);
     }
 }

@@ -59,13 +59,7 @@ public class SplashViewModel extends ViewModel {
 
     public void callTimer() {
         new Handler().postDelayed(() -> {
-            if (preferences.getString("loggedIn", " ").equals("1")) {
-                checkNetwork();
-            } else {
-                Intent i = new Intent(activity, LoginScreen.class);
-                activity.startActivity(i);
-                activity.finish();
-            }
+            checkNetwork();
         }, 3000);
     }
 

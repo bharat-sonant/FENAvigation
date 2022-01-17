@@ -171,23 +171,6 @@ public class CommonMethods {
         }
     }
 
-    public String decrypt(String password, String outputString) throws Exception {
-        SecretKeySpec key = generateKey(outputString);
-        Cipher c = Cipher.getInstance("AES");
-        c.init(Cipher.DECRYPT_MODE, key);
-        byte[] decodeValue = Base64.decode(password, Base64.DEFAULT);
-        byte[] decVal = c.doFinal(decodeValue);
-        return new String(decVal);
-    }
-
-    private SecretKeySpec generateKey(String userName) throws Exception {
-        final MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        byte[] bytes = userName.getBytes("UTF-8");
-        digest.update(bytes, 0, bytes.length);
-        byte[] key = digest.digest();
-        return new SecretKeySpec(key, "AES");
-    }
-
     @SuppressLint("SimpleDateFormat")
     public String date() {
         return new SimpleDateFormat("yyyy-MM-dd").format(new Date());
@@ -258,7 +241,7 @@ public class CommonMethods {
         LocationRequest mLocationRequest = LocationRequest.create().setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY).setInterval(1000).setNumUpdates(2);
         final LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder().addLocationRequest(mLocationRequest);
         builder.setAlwaysShow(true);
-        builder.setNeedBle(false);
+        builder.setNeedBle(true);
         SettingsClient client = LocationServices.getSettingsClient(activity);
         Task<LocationSettingsResponse> task = client.checkLocationSettings(builder.build());
         task.addOnSuccessListener(activity, locationSettingsResponse -> {

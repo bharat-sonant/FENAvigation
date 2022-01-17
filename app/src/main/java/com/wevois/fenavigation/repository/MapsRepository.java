@@ -6,7 +6,6 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
-import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -15,9 +14,9 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
-import com.google.maps.android.PolyUtil;
 import com.wevois.fenavigation.CommonMethods;
 import com.wevois.fenavigation.Model;
+import com.wevois.fenavigation.model.BoundaryLatLngModel;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -27,10 +26,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -40,7 +37,8 @@ public class MapsRepository {
 
     CommonMethods common = CommonMethods.getInstance();
 
-    public void fetchWardBoundariesData(Activity activity) {
+    public LiveData<String> fetchWardBoundariesData(Activity activity) {
+        MutableLiveData<String> response = new MutableLiveData<>();
         SharedPreferences preferences = activity.getSharedPreferences("FirebasePath", MODE_PRIVATE);
         common.setProgressBar("Please Wait", activity, activity);
         common.getStoRef(activity).child("/Defaults/BoundariesLatLng.json").getMetadata().addOnSuccessListener(storageMetadata -> {
@@ -60,6 +58,7 @@ public class MapsRepository {
                                     }
                                     preferences.edit().putString("BoundariesLatLng", sb.toString()).apply();
                                     preferences.edit().putLong("BoundariesLatLngDownloadTime", fileCreationTime).apply();
+                                    response.setValue("success");
                                     common.closeDialog(activity);
                                 } catch (Exception e) {
                                     e.printStackTrace();
@@ -68,13 +67,16 @@ public class MapsRepository {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+            }else {
+                response.setValue("success");
             }
         });
+        return response;
     }
 
     @SuppressLint("StaticFieldLeak")
-    public LiveData<String[]> wardFromAvailableLatLng(LatLng finalLocation, Activity activity) {
-        MutableLiveData<String[]> response = new MutableLiveData<>();
+    public LiveData<ArrayList<BoundaryLatLngModel>> wardFromAvailableLatLng(Activity activity) {
+        MutableLiveData<ArrayList<BoundaryLatLngModel>> response = new MutableLiveData<>();
         new AsyncTask<Void, Void, Boolean>() {
             @Override
             protected void onPreExecute() {
@@ -84,6 +86,7 @@ public class MapsRepository {
             @SuppressLint("WrongThread")
             @Override
             protected Boolean doInBackground(Void... p) {
+                ArrayList<BoundaryLatLngModel> boundaryLatLngModels = new ArrayList<>();
                 SharedPreferences preferences = activity.getSharedPreferences("FirebasePath", MODE_PRIVATE);
                 Iterator<String> iterator = null;
                 try {
@@ -91,7 +94,6 @@ public class MapsRepository {
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
-                boolean isIterate = false;
                 while (iterator.hasNext()) {
                     try {
                         String key = iterator.next();
@@ -101,18 +103,14 @@ public class MapsRepository {
                             String[] latlngArray = String.valueOf(tempLatLngArray.get(i)).split(",");
                             latLngOfBoundaryArrayList.add(new LatLng(Double.parseDouble(latlngArray[1].trim()), Double.parseDouble(latlngArray[0].trim())));
                             if (i == tempLatLngArray.length() - 1) {
-                                if (PolyUtil.containsLocation(new LatLng(finalLocation.latitude, finalLocation.longitude), latLngOfBoundaryArrayList, true)) {
-                                    isIterate = true;
-                                    response.postValue(key.split("_"));
-                                    break;
-                                }
+                                boundaryLatLngModels.add(new BoundaryLatLngModel(key,latLngOfBoundaryArrayList));
                             }
                         }
-                        if (isIterate) break;
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
                 }
+                response.postValue(boundaryLatLngModels);
                 return null;
             }
         }.execute();

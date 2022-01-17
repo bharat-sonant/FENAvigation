@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -49,6 +50,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.databinding.ObservableField;
+import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ViewModel;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -66,9 +68,11 @@ import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
+import com.google.maps.android.PolyUtil;
 import com.wevois.fenavigation.CommonMethods;
 import com.wevois.fenavigation.Model;
 import com.wevois.fenavigation.R;
+import com.wevois.fenavigation.model.BoundaryLatLngModel;
 import com.wevois.fenavigation.repository.MapsRepository;
 import com.wevois.fenavigation.views.HomeMapsActivity;
 import com.wevois.fenavigation.MyService;
@@ -90,12 +94,13 @@ public class HomeMapsViewModel extends ViewModel {
     Activity activity;
     SupportMapFragment mapFragment;
     CommonMethods common = CommonMethods.getInstance();
-    boolean isAlertBoxOpen = false, firstTime = true, isCall = true, isCallGetZoneWard = true, isDutyOff = true;
+    boolean isAlertBoxOpen = false, firstTime = true, isCall = true, isCallGetZoneWard = true, isDutyOff = true,isPictureInPictureMode=false;
     CountDownTimer countDownTimerLocation, countDownTimerGetZoneAndWard, onPauseTimer;
     LatLng latLng, previousLat;
     float[] moveDistance = new float[1];
     Marker markerCurrent, markerMove;
     MapsRepository repository = new MapsRepository();
+    ArrayList<BoundaryLatLngModel> boundaryLatLngModels=new ArrayList<>();
     public ObservableField<String> ward = new ObservableField<>("fetching..");
     public ObservableField<String> zone = new ObservableField<>("fetching..");
     public ObservableField<String> totalDistance = new ObservableField<>("fetching..");
@@ -103,6 +108,7 @@ public class HomeMapsViewModel extends ViewModel {
     public ObservableField<String> totalPhoto = new ObservableField<>("fetching..");
     public ObservableField<String> speedTv = new ObservableField<>("0");
     public ObservableField<String> timeDate = new ObservableField<>("0");
+    public ObservableField<String> textTv = new ObservableField<>("Gray color me previous day ka data show ho rha hai.");
 
     SharedPreferences preferences;
     public static JSONObject jsonObjectLocationHistory = new JSONObject(), jsonObjectHalt = new JSONObject();
@@ -116,13 +122,20 @@ public class HomeMapsViewModel extends ViewModel {
     HashMap<String, Marker> imageMarker = new HashMap<>();
     boolean isOpen = true;
 
-    public void init(HomeMapsActivity mapsPage, SupportMapFragment fragment) {
-        activity = mapsPage;
+    public HomeMapsViewModel(Activity activity, SupportMapFragment fragment) {
+        this.activity = activity;
         mapFragment = fragment;
         preferences = activity.getSharedPreferences("FirebasePath", MODE_PRIVATE);
-        common.checkWhetherLocationSettingsAreAvailable(activity).observeForever(response -> {
+        common.checkWhetherLocationSettingsAreAvailable(activity).observe((LifecycleOwner) activity, response -> {
         });
-        repository.fetchWardBoundariesData(activity);
+        repository.fetchWardBoundariesData(activity).observe((LifecycleOwner) activity,response->{
+            repository.wardFromAvailableLatLng(activity).observe((LifecycleOwner) activity,result->{
+                boundaryLatLngModels = result;
+                setWardAndZone();
+            });
+        });
+        Log.d(TAG, "HomeMapsViewModel: check "+preferences.getString("PreviousDayMessage",""));
+        textTv.set(preferences.getString("PreviousDayMessage",""));
         timeDate.set(today);
         initViews();
         setMap();
@@ -141,19 +154,14 @@ public class HomeMapsViewModel extends ViewModel {
                 }
             });
         }
-        Trackingline();
-
+        previousTrackingLine();
     }
 
-    private void Trackingline(){
+    private void previousTrackingLine() {
         Date date1 = new Date(System.currentTimeMillis() - (1000 * 60 * 60 * 24));
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         String date = sdf.format(date1);
-        String monthname1 = common.monthName();
-        String yearname = common.year();
-        Log.d(TAG, "onDataChange: Amit " + date);
-        common.getDatabaseForApplication(activity).child("LocationHistory").child(preferences.getString("uid", " ")).child("" + yearname).child("" +
-                monthname1).child("" + date).addListenerForSingleValueEvent(new ValueEventListener() {
+        common.getDatabaseForApplication(activity).child("LocationHistory").child(preferences.getString("uid", " ")).child("" + common.year()).child("" + common.monthName()).child("" + date).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 ArrayList<LatLng> data1 = new ArrayList<>();
@@ -163,16 +171,12 @@ public class HomeMapsViewModel extends ViewModel {
                             String[] data = dataSnapshot.child("lat-lng").getValue().toString().split("~");
                             for (int i = 0; i < data.length; i++) {
                                 String[] latLngs = data[i].substring(1, data[i].length() - 1).split(",");
-                                Log.d(TAG, "onDataChange: ABC" + latLngs);
                                 if (Double.parseDouble(latLngs[0].trim()) != 0.0 && Double.parseDouble(latLngs[1].trim()) != 0.0) {
                                     data1.add(new LatLng(Double.parseDouble(latLngs[0].trim()), Double.parseDouble(latLngs[1].trim())));
-                                    Log.d(TAG, "onDataChange: ABBS" + data1);
                                 }
                             }
                         }
-                        Log.d(TAG, "onDataChange: C " + data1);
                     }
-                    Log.d(TAG, "onDataChange: C " + data1);
                     showLineOnMap(data1, false);
                 }
             }
@@ -182,8 +186,6 @@ public class HomeMapsViewModel extends ViewModel {
 
             }
         });
-
-
     }
 
     private void callMethodAfterDutyOff() {
@@ -275,6 +277,9 @@ public class HomeMapsViewModel extends ViewModel {
                 if (alertBox.equals("yes")) {
                     if (!isAlertBoxOpen) {
                         isAlertBoxOpen = true;
+                        if (isPictureInPictureMode){
+                            reOpenActivity();
+                        }
                         common.checkWhetherLocationSettingsAreAvailable(activity).observeForever(response -> {
                         });
                     }
@@ -282,6 +287,14 @@ public class HomeMapsViewModel extends ViewModel {
             }
         }
     };
+
+    public void pictureInPictureMode(boolean isPictureInPictureModes) {
+        if (isPictureInPictureModes) {
+            isPictureInPictureMode = isPictureInPictureModes;
+        } else {
+            isPictureInPictureMode = isPictureInPictureModes;
+        }
+    }
 
     private class currentLocationShow extends AsyncTask<Void, String, String> {
         @Override
@@ -543,6 +556,9 @@ public class HomeMapsViewModel extends ViewModel {
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     public void pause() {
+        if (!isAlertBoxOpen) {
+            pictureInPictureMethod();
+        }
         if (!preferences.getString("dutyOff", "").equalsIgnoreCase(common.date()) && preferences.getString("dutyIn", "").equalsIgnoreCase(common.date())) {
             if (preferences.getString("isAppOpen", "").equalsIgnoreCase("yes")) {
                 if (onPauseTimer != null) {
@@ -562,15 +578,43 @@ public class HomeMapsViewModel extends ViewModel {
 
             @SuppressLint("SimpleDateFormat")
             public void onFinish() {
-                if (!preferences.getString("dutyOff", "").equalsIgnoreCase(common.date()) && preferences.getString("dutyIn", "").equalsIgnoreCase(common.date())) {
-                    Intent rIntent = new Intent(activity, HomeMapsActivity.class);
-                    rIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                    PendingIntent intent = PendingIntent.getActivity(activity, 0, rIntent, PendingIntent.FLAG_IMMUTABLE);
-                    AlarmManager manager = (AlarmManager) activity.getSystemService(Context.ALARM_SERVICE);
-                    manager.set(AlarmManager.RTC, System.currentTimeMillis(), intent);
-                }
+                reOpenActivity();
             }
         }.start();
+    }
+
+    public void reOpenActivity() {
+        if (!preferences.getString("dutyOff", "").equalsIgnoreCase(common.date()) && preferences.getString("dutyIn", "").equalsIgnoreCase(common.date())) {
+            Intent rIntent = new Intent(activity, HomeMapsActivity.class);
+            rIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            PendingIntent intent = PendingIntent.getActivity(activity, 0, rIntent, PendingIntent.FLAG_IMMUTABLE);
+            AlarmManager manager = (AlarmManager) activity.getSystemService(Context.ALARM_SERVICE);
+            manager.set(AlarmManager.RTC, System.currentTimeMillis(), intent);
+        }
+    }
+
+    public void stop() {
+        reOpenActivity();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    public void back() {
+        pictureInPictureMethod();
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void pictureInPictureMethod() {
+        if (!preferences.getString("dutyOff", "").equalsIgnoreCase(common.date()) && preferences.getString("dutyIn", "").equalsIgnoreCase(common.date())) {
+            Display d = activity.getWindowManager().getDefaultDisplay();
+            Point p = new Point();
+            d.getSize(p);
+            int width = p.x;
+            int height = p.y;
+            Rational ratio = new Rational(width, height);
+            PictureInPictureParams.Builder pip_Builder = new PictureInPictureParams.Builder();
+            pip_Builder.setAspectRatio(ratio).build();
+            activity.enterPictureInPictureMode();
+        }
     }
 
     public void onRefreshClick() {
@@ -782,7 +826,7 @@ public class HomeMapsViewModel extends ViewModel {
 
     public void showLineOnMap(ArrayList<LatLng> distance, boolean b) {
         activity.runOnUiThread(() -> {
-            if(b){
+            if (b) {
                 try {
                     polyline.remove();
                 } catch (Exception e) {
@@ -907,12 +951,18 @@ public class HomeMapsViewModel extends ViewModel {
 
     public void setWardAndZone() {
         if (latLng != null) {
-            repository.wardFromAvailableLatLng(latLng, activity).observeForever(responses -> {
-                if (responses.length > 0) {
-                    ward.set(responses[0]);
-                    zone.set(responses[1]);
+            Log.d(TAG, "setWardAndZone: check "+boundaryLatLngModels);
+            if (!boundaryLatLngModels.isEmpty()){
+                Log.d(TAG, "setWardAndZone: check A "+boundaryLatLngModels);
+                for (BoundaryLatLngModel boundaryLatLngModel: boundaryLatLngModels) {
+                    if (PolyUtil.containsLocation(new LatLng(latLng.latitude, latLng.longitude), boundaryLatLngModel.getLatLngArrayList(), true)) {
+                        String[] data = boundaryLatLngModel.getKey().split("_");
+                        ward.set(data[0]);
+                        zone.set(data[1]);
+                        break;
+                    }
                 }
-            });
+            }
         }
     }
 }

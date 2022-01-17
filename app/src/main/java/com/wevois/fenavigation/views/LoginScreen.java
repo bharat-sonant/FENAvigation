@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProviders;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.wevois.fenavigation.R;
@@ -35,6 +36,7 @@ public class LoginScreen extends AppCompatActivity {
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        Log.d("TAG", "googleSignInBtn: check A ");
         viewModel.resultActivity(requestCode, resultCode, data);
     }
 }
