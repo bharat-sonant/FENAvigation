@@ -77,12 +77,18 @@ public class SplashViewModel extends ViewModel {
                         }
                         if (snapshot.getValue() != null) {
                             if (version.equals(snapshot.getValue().toString())) {
-                                if (preferences.getString("dutyIn", " ").equals(common.date())) {
-                                    Intent i = new Intent(activity, HomeMapsActivity.class);
-                                    activity.startActivity(i);
-                                    activity.finish();
+                                if (preferences.getString("loggedIn", " ").equals("1")) {
+                                    if (preferences.getString("dutyIn", " ").equals(common.date())) {
+                                        Intent i = new Intent(activity, HomeMapsActivity.class);
+                                        activity.startActivity(i);
+                                        activity.finish();
+                                    } else {
+                                        Intent i = new Intent(activity, DutyIn.class);
+                                        activity.startActivity(i);
+                                        activity.finish();
+                                    }
                                 } else {
-                                    Intent i = new Intent(activity, DutyIn.class);
+                                    Intent i = new Intent(activity, LoginScreen.class);
                                     activity.startActivity(i);
                                     activity.finish();
                                 }
