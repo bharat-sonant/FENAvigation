@@ -63,19 +63,7 @@ public class SplashRepository {
             });
         }).start();
         new Thread(() -> {
-            common.getDatabaseForApplication(activity).child("WastebinMonitor/FieldExecutive/" + preferences.getString("uid", "") + "/isAppOpen").addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    if (dataSnapshot.getValue() != null) {
-                        preferences.edit().putString("isAppOpen", dataSnapshot.getValue().toString()).apply();
-                    }
-                }
-
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-
-                }
-            });
+            getFENavigationData(activity,preferences);
         }).start();
         new Thread(() -> {
             Log.d("TAG", "getSettingsData: check data ");
@@ -99,5 +87,26 @@ public class SplashRepository {
                 }
             });
         }).start();
+    }
+
+    public void getFENavigationData(Activity activity, SharedPreferences preferences) {
+        common.getDatabaseForApplication(activity).child("WastebinMonitor/FieldExecutive/" + preferences.getString("uid", "")).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.getValue() != null) {
+                    if (dataSnapshot.hasChild("isAppOpen")) {
+                        preferences.edit().putString("isAppOpen", dataSnapshot.child("isAppOpen").getValue().toString()).apply();
+                    }
+                    if (dataSnapshot.hasChild("isPictureInPictureAllow")) {
+                        preferences.edit().putString("isPictureInPictureAllow", dataSnapshot.child("isPictureInPictureAllow").getValue().toString()).apply();
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
     }
 }

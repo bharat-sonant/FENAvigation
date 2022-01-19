@@ -166,7 +166,6 @@ public class MyService extends Service {
     }
 
     private void setPathTraversal() {
-        Log.d("TAG", "onLocationResult: check C "+currentLat);
         StringBuilder traversalHistory = new StringBuilder();
         maxDistance = (int) Math.round(preferences.getInt("maxDistanceCoveredPerSecond", 0) * (Double.parseDouble(String.valueOf(preferences.getInt("pathTraverseArrayTime", 0))) / 1000));
         maxDistanceCanCover = maxDistance;

@@ -278,7 +278,9 @@ public class HomeMapsViewModel extends ViewModel {
                     if (!isAlertBoxOpen) {
                         isAlertBoxOpen = true;
                         if (isPictureInPictureMode){
-                            reOpenActivity();
+                            if (!preferences.getString("isPictureInPictureAllow", "").equalsIgnoreCase("no")) {
+                                reOpenActivity();
+                            }
                         }
                         common.checkWhetherLocationSettingsAreAvailable(activity).observeForever(response -> {
                         });
@@ -560,6 +562,7 @@ public class HomeMapsViewModel extends ViewModel {
             pictureInPictureMethod();
         }
         if (!preferences.getString("dutyOff", "").equalsIgnoreCase(common.date()) && preferences.getString("dutyIn", "").equalsIgnoreCase(common.date())) {
+            Log.d(TAG, "pause: check "+preferences.getString("isAppOpen", ""));
             if (preferences.getString("isAppOpen", "").equalsIgnoreCase("yes")) {
                 if (onPauseTimer != null) {
                     onPauseTimer.cancel();
@@ -594,7 +597,9 @@ public class HomeMapsViewModel extends ViewModel {
     }
 
     public void stop() {
-        reOpenActivity();
+        if (!preferences.getString("isPictureInPictureAllow", "").equalsIgnoreCase("no")) {
+            reOpenActivity();
+        }
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
@@ -605,15 +610,18 @@ public class HomeMapsViewModel extends ViewModel {
     @RequiresApi(api = Build.VERSION_CODES.O)
     private void pictureInPictureMethod() {
         if (!preferences.getString("dutyOff", "").equalsIgnoreCase(common.date()) && preferences.getString("dutyIn", "").equalsIgnoreCase(common.date())) {
-            Display d = activity.getWindowManager().getDefaultDisplay();
-            Point p = new Point();
-            d.getSize(p);
-            int width = p.x;
-            int height = p.y;
-            Rational ratio = new Rational(width, height);
-            PictureInPictureParams.Builder pip_Builder = new PictureInPictureParams.Builder();
-            pip_Builder.setAspectRatio(ratio).build();
-            activity.enterPictureInPictureMode();
+            Log.d(TAG, "pictureInPictureMethod: check "+preferences.getString("isPictureInPictureAllow", ""));
+            if (!preferences.getString("isPictureInPictureAllow", "").equalsIgnoreCase("no")) {
+                Display d = activity.getWindowManager().getDefaultDisplay();
+                Point p = new Point();
+                d.getSize(p);
+                int width = p.x;
+                int height = p.y;
+                Rational ratio = new Rational(width, height);
+                PictureInPictureParams.Builder pip_Builder = new PictureInPictureParams.Builder();
+                pip_Builder.setAspectRatio(ratio).build();
+                activity.enterPictureInPictureMode();
+            }
         }
     }
 

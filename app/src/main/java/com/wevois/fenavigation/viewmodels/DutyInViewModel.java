@@ -36,6 +36,7 @@ import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 import com.wevois.fenavigation.CommonMethods;
 import com.wevois.fenavigation.MyService;
+import com.wevois.fenavigation.repository.SplashRepository;
 import com.wevois.fenavigation.views.DutyIn;
 import com.wevois.fenavigation.views.HomeMapsActivity;
 
@@ -64,6 +65,7 @@ public class DutyInViewModel extends ViewModel {
         preferences = activity.getSharedPreferences("FirebasePath", MODE_PRIVATE);
         userName.set(preferences.getString("name", ""));
         getLocationPermission();
+        new SplashRepository().getFENavigationData(activity,preferences);
     }
 
     public void dutyInClick() {
@@ -78,7 +80,6 @@ public class DutyInViewModel extends ViewModel {
     }
 
     public void getLocationPermission() {
-        Log.d("TAG", "onActivityResult: check calling A ");
         LocationServices.getSettingsClient(activity).checkLocationSettings(new LocationSettingsRequest.Builder()
                 .addLocationRequest(new LocationRequest().setInterval(5000).setFastestInterval(1000).setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY))
                 .setAlwaysShow(true).setNeedBle(true).build())
