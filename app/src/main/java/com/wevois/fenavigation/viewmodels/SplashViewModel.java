@@ -7,9 +7,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Handler;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
@@ -21,8 +19,8 @@ import com.google.firebase.database.ValueEventListener;
 import com.wevois.fenavigation.CommonMethods;
 import com.wevois.fenavigation.repository.SplashRepository;
 import com.wevois.fenavigation.views.DutyIn;
-import com.wevois.fenavigation.views.HomeMapsActivity;
 import com.wevois.fenavigation.views.LoginScreen;
+import com.wevois.fenavigation.views.Maps;
 import com.wevois.fenavigation.views.SplashScreen;
 
 public class SplashViewModel extends ViewModel {
@@ -79,7 +77,7 @@ public class SplashViewModel extends ViewModel {
                             if (version.equals(snapshot.getValue().toString())) {
                                 if (preferences.getString("loggedIn", " ").equals("1")) {
                                     if (preferences.getString("dutyIn", " ").equals(common.date())) {
-                                        Intent i = new Intent(activity, HomeMapsActivity.class);
+                                        Intent i = new Intent(activity, Maps.class);
                                         activity.startActivity(i);
                                         activity.finish();
                                     } else {

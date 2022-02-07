@@ -2,6 +2,8 @@ package com.wevois.fenavigation.viewmodels;
 
 import static android.content.Context.MODE_PRIVATE;
 
+import static com.google.firebase.crashlytics.internal.Logger.TAG;
+
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -38,7 +40,7 @@ import com.wevois.fenavigation.CommonMethods;
 import com.wevois.fenavigation.MyService;
 import com.wevois.fenavigation.repository.SplashRepository;
 import com.wevois.fenavigation.views.DutyIn;
-import com.wevois.fenavigation.views.HomeMapsActivity;
+import com.wevois.fenavigation.views.Maps;
 
 import org.apache.commons.net.ntp.NTPUDPClient;
 import org.apache.commons.net.ntp.TimeInfo;
@@ -65,6 +67,7 @@ public class DutyInViewModel extends ViewModel {
         preferences = activity.getSharedPreferences("FirebasePath", MODE_PRIVATE);
         userName.set(preferences.getString("name", ""));
         getLocationPermission();
+        Log.d(TAG, "onBackPressed: check BC " + preferences.getString("isPictureInPictureAllow", ""));
         new SplashRepository().getFENavigationData(activity,preferences);
     }
 
@@ -231,14 +234,14 @@ public class DutyInViewModel extends ViewModel {
                                                 preferences.edit().putString("LocationHistory","").apply();
                                                 preferences.edit().putString("HaltHistory","").apply();
                                                 preferences.edit().putString("dutyIn", common.date()).apply();
-                                                activity.startActivity(new Intent(activity, HomeMapsActivity.class));
+                                                activity.startActivity(new Intent(activity, Maps.class));
                                                 activity.finish();
                                                 common.closeDialog(activity);
                                             }
                                         });
                             }else {
                                 preferences.edit().putString("dutyIn", common.date()).apply();
-                                activity.startActivity(new Intent(activity, HomeMapsActivity.class));
+                                activity.startActivity(new Intent(activity, Maps.class));
                                 activity.finish();
                                 common.closeDialog(activity);
                             }

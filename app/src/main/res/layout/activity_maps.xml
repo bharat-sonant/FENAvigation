@@ -4,8 +4,8 @@
     <data>
         <import type="com.google.android.gms.maps.SupportMapFragment" />
         <variable
-            name="homemapsviewmodel"
-            type="com.wevois.fenavigation.viewmodels.HomeMapsViewModel" />
+            name="mapsviewmodel"
+            type="com.wevois.fenavigation.viewmodels.MapsViewModel" />
     </data>
     <LinearLayout
         android:layout_width="match_parent"
@@ -62,7 +62,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="top|center"
                     android:gravity="center"
-                    android:text="@{homemapsviewmodel.speedTv}"
+                    android:text="@{mapsviewmodel.speedTv}"
                     android:textColor="#000"
                     android:textSize="15dp" />
                 <TextView
@@ -92,8 +92,8 @@
                     android:gravity="center|left"
                     android:layout_gravity="left"
                     android:background="@drawable/address_background_shape"
-                    android:text="@{homemapsviewmodel.textTv}"
-                    android:onClick="@{()->homemapsviewmodel.datePicker()}"
+                    android:text="@{mapsviewmodel.textTv}"
+                    android:onClick="@{()->mapsviewmodel.datePicker()}"
                     app:layout_constraintEnd_toEndOf="parent"/>
                 <Button
                     android:id="@+id/filters_btn"
@@ -104,8 +104,8 @@
                     android:gravity="center|right"
                     android:layout_gravity="right"
                     android:background="@drawable/address_background_shape"
-                    android:text="@{homemapsviewmodel.timeDate}"
-                    android:onClick="@{()->homemapsviewmodel.datePicker()}"
+                    android:text="@{mapsviewmodel.timeDate}"
+                    android:onClick="@{()->mapsviewmodel.datePicker()}"
                     app:layout_constraintEnd_toEndOf="parent"/>
             </LinearLayout>
 
@@ -117,7 +117,7 @@
                 android:layout_marginRight="10dp"
                 android:background="@drawable/ic_log_out"
                 android:gravity="center"
-                android:onClick="@{()->homemapsviewmodel.onDutyOffClick()}"
+                android:onClick="@{()->mapsviewmodel.onDutyOffClick()}"
                 android:orientation="vertical">
             </LinearLayout>
             <LinearLayout
@@ -127,7 +127,7 @@
                 android:layout_gravity="center|bottom"
                 android:background="@drawable/ic_wastebin_logo"
                 android:gravity="center"
-                android:onClick="@{()->homemapsviewmodel.onClickOpen()}"
+                android:onClick="@{()->mapsviewmodel.onClickOpen()}"
                 android:orientation="vertical">
             </LinearLayout>
             <LinearLayout
@@ -157,7 +157,7 @@
                             android:layout_height="wrap_content"
                             android:textSize="16dp"
                             android:textStyle="bold"
-                            android:text="@{homemapsviewmodel.ward}"
+                            android:text="@{mapsviewmodel.ward}"
                             android:textColor="#000"/>
                         <TextView
                             android:layout_width="match_parent"
@@ -182,7 +182,7 @@
                             android:layout_height="wrap_content"
                             android:textSize="16dp"
                             android:textStyle="bold"
-                            android:text="@{homemapsviewmodel.zone}"
+                            android:text="@{mapsviewmodel.zone}"
                             android:textColor="#000"/>
                         <TextView
                             android:layout_width="match_parent"
@@ -200,7 +200,7 @@
                         android:layout_height="match_parent"
                         android:gravity="center|left"
                         android:orientation="vertical"
-                        android:onClick="@{()->homemapsviewmodel.onRefreshClick()}"
+                        android:onClick="@{()->mapsviewmodel.onRefreshClick()}"
                         android:weightSum="90"
                         android:padding="10dp">
                         <TextView
@@ -209,7 +209,7 @@
                             android:textSize="16dp"
                             android:textStyle="bold"
                             android:drawableRight="@drawable/ic_refresh"
-                            android:text="@{homemapsviewmodel.totalPhoto}"
+                            android:text="@{mapsviewmodel.totalPhoto}"
                             android:textColor="#000"/>
                         <TextView
                             android:layout_width="match_parent"
@@ -218,93 +218,93 @@
                             android:text="Total photo"/>
                     </LinearLayout>
                 </LinearLayout>
-<!--                <View-->
-<!--                    android:layout_width="match_parent"-->
-<!--                    android:layout_height=".5dp"-->
-<!--                    android:background="#C6C2C2"/>-->
-<!--                <LinearLayout-->
-<!--                    android:layout_width="match_parent"-->
-<!--                    android:layout_height="60dp"-->
-<!--                    android:gravity="center"-->
-<!--                    android:layout_marginTop="8dp"-->
-<!--                    android:weightSum="90"-->
-<!--                    android:orientation="horizontal">-->
-<!--                    <LinearLayout-->
-<!--                        android:layout_width="0dp"-->
-<!--                        android:layout_weight="30"-->
-<!--                        android:layout_height="match_parent"-->
-<!--                        android:gravity="center|left"-->
-<!--                        android:padding="10dp"-->
-<!--                        android:orientation="vertical">-->
-<!--                        <TextView-->
-<!--                            android:layout_width="match_parent"-->
-<!--                            android:layout_height="wrap_content"-->
-<!--                            android:textSize="16dp"-->
-<!--                            android:textStyle="bold"-->
-<!--                            android:text="@{homemapsviewmodel.totalDistance}"-->
-<!--                            android:textColor="#000"/>-->
-<!--                        <TextView-->
-<!--                            android:layout_width="match_parent"-->
-<!--                            android:layout_height="wrap_content"-->
-<!--                            android:textSize="14dp"-->
-<!--                            android:text="Total Distance"/>-->
-<!--                    </LinearLayout>-->
+                <!--                <View-->
+                <!--                    android:layout_width="match_parent"-->
+                <!--                    android:layout_height=".5dp"-->
+                <!--                    android:background="#C6C2C2"/>-->
+                <!--                <LinearLayout-->
+                <!--                    android:layout_width="match_parent"-->
+                <!--                    android:layout_height="60dp"-->
+                <!--                    android:gravity="center"-->
+                <!--                    android:layout_marginTop="8dp"-->
+                <!--                    android:weightSum="90"-->
+                <!--                    android:orientation="horizontal">-->
+                <!--                    <LinearLayout-->
+                <!--                        android:layout_width="0dp"-->
+                <!--                        android:layout_weight="30"-->
+                <!--                        android:layout_height="match_parent"-->
+                <!--                        android:gravity="center|left"-->
+                <!--                        android:padding="10dp"-->
+                <!--                        android:orientation="vertical">-->
+                <!--                        <TextView-->
+                <!--                            android:layout_width="match_parent"-->
+                <!--                            android:layout_height="wrap_content"-->
+                <!--                            android:textSize="16dp"-->
+                <!--                            android:textStyle="bold"-->
+                <!--                            android:text="@{homemapsviewmodel.totalDistance}"-->
+                <!--                            android:textColor="#000"/>-->
+                <!--                        <TextView-->
+                <!--                            android:layout_width="match_parent"-->
+                <!--                            android:layout_height="wrap_content"-->
+                <!--                            android:textSize="14dp"-->
+                <!--                            android:text="Total Distance"/>-->
+                <!--                    </LinearLayout>-->
 
-<!--                    <View-->
-<!--                        android:layout_width=".5dp"-->
-<!--                        android:layout_height="match_parent"-->
-<!--                        android:background="#C6C2C2"/>-->
-<!--                    <LinearLayout-->
-<!--                        android:layout_width="0dp"-->
-<!--                        android:layout_weight="30"-->
-<!--                        android:layout_height="match_parent"-->
-<!--                        android:gravity="center|left"-->
-<!--                        android:orientation="vertical"-->
-<!--                        android:weightSum="90"-->
-<!--                        android:padding="10dp">-->
-<!--                        <TextView-->
-<!--                            android:layout_width="match_parent"-->
-<!--                            android:layout_height="wrap_content"-->
-<!--                            android:textSize="16dp"-->
-<!--                            android:textStyle="bold"-->
-<!--                            android:text="@{homemapsviewmodel.totalHalt}"-->
-<!--                            android:textColor="#000"/>-->
-<!--                        <TextView-->
-<!--                            android:layout_width="match_parent"-->
-<!--                            android:layout_height="wrap_content"-->
-<!--                            android:textSize="14dp"-->
-<!--                            android:text="Total Halt"/>-->
-<!--                    </LinearLayout>-->
+                <!--                    <View-->
+                <!--                        android:layout_width=".5dp"-->
+                <!--                        android:layout_height="match_parent"-->
+                <!--                        android:background="#C6C2C2"/>-->
+                <!--                    <LinearLayout-->
+                <!--                        android:layout_width="0dp"-->
+                <!--                        android:layout_weight="30"-->
+                <!--                        android:layout_height="match_parent"-->
+                <!--                        android:gravity="center|left"-->
+                <!--                        android:orientation="vertical"-->
+                <!--                        android:weightSum="90"-->
+                <!--                        android:padding="10dp">-->
+                <!--                        <TextView-->
+                <!--                            android:layout_width="match_parent"-->
+                <!--                            android:layout_height="wrap_content"-->
+                <!--                            android:textSize="16dp"-->
+                <!--                            android:textStyle="bold"-->
+                <!--                            android:text="@{homemapsviewmodel.totalHalt}"-->
+                <!--                            android:textColor="#000"/>-->
+                <!--                        <TextView-->
+                <!--                            android:layout_width="match_parent"-->
+                <!--                            android:layout_height="wrap_content"-->
+                <!--                            android:textSize="14dp"-->
+                <!--                            android:text="Total Halt"/>-->
+                <!--                    </LinearLayout>-->
 
-<!--                    <View-->
-<!--                        android:layout_width=".5dp"-->
-<!--                        android:layout_height="match_parent"-->
-<!--                        android:background="#C6C2C2"/>-->
-<!--                    <LinearLayout-->
-<!--                        android:layout_width="0dp"-->
-<!--                        android:layout_weight="30"-->
-<!--                        android:layout_height="match_parent"-->
-<!--                        android:gravity="center|left"-->
-<!--                        android:orientation="vertical"-->
-<!--                        android:onClick="@{()->homemapsviewmodel.onRefreshClick()}"-->
-<!--                        android:weightSum="90"-->
-<!--                        android:padding="10dp">-->
-<!--                        <TextView-->
-<!--                            android:layout_width="match_parent"-->
-<!--                            android:layout_height="wrap_content"-->
-<!--                            android:textSize="16dp"-->
-<!--                            android:textStyle="bold"-->
-<!--                            android:drawableRight="@drawable/ic_refresh"-->
-<!--                            android:text="@{homemapsviewmodel.totalPhoto}"-->
-<!--                            android:textColor="#000"/>-->
-<!--                        <TextView-->
-<!--                            android:layout_width="match_parent"-->
-<!--                            android:layout_height="wrap_content"-->
-<!--                            android:textSize="14dp"-->
-<!--                            android:text="Total photo"/>-->
-<!--                    </LinearLayout>-->
+                <!--                    <View-->
+                <!--                        android:layout_width=".5dp"-->
+                <!--                        android:layout_height="match_parent"-->
+                <!--                        android:background="#C6C2C2"/>-->
+                <!--                    <LinearLayout-->
+                <!--                        android:layout_width="0dp"-->
+                <!--                        android:layout_weight="30"-->
+                <!--                        android:layout_height="match_parent"-->
+                <!--                        android:gravity="center|left"-->
+                <!--                        android:orientation="vertical"-->
+                <!--                        android:onClick="@{()->homemapsviewmodel.onRefreshClick()}"-->
+                <!--                        android:weightSum="90"-->
+                <!--                        android:padding="10dp">-->
+                <!--                        <TextView-->
+                <!--                            android:layout_width="match_parent"-->
+                <!--                            android:layout_height="wrap_content"-->
+                <!--                            android:textSize="16dp"-->
+                <!--                            android:textStyle="bold"-->
+                <!--                            android:drawableRight="@drawable/ic_refresh"-->
+                <!--                            android:text="@{homemapsviewmodel.totalPhoto}"-->
+                <!--                            android:textColor="#000"/>-->
+                <!--                        <TextView-->
+                <!--                            android:layout_width="match_parent"-->
+                <!--                            android:layout_height="wrap_content"-->
+                <!--                            android:textSize="14dp"-->
+                <!--                            android:text="Total photo"/>-->
+                <!--                    </LinearLayout>-->
 
-<!--                </LinearLayout>-->
+                <!--                </LinearLayout>-->
 
             </LinearLayout>
         </FrameLayout>

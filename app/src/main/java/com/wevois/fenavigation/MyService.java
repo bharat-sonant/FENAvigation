@@ -18,8 +18,8 @@ import android.os.Looper;
 import android.provider.Settings;
 import android.util.Log;
 
-import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationCompat;
+import androidx.core.content.ContextCompat;
 
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -28,8 +28,8 @@ import com.google.android.gms.location.LocationServices;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.wevois.fenavigation.repository.MapsRepo;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -45,7 +45,7 @@ public class MyService extends Service {
     Intent locationInfo;
     SharedPreferences preferences;
     boolean mobileOffDataCaptured = false, requiredDistanceCovered = false;
-    CountDownTimer countDownTimerPath, countDownTimerTemp,countDownTimerLocation;
+    CountDownTimer countDownTimerPath, countDownTimerTemp, countDownTimerLocation;
     DatabaseReference databaseReferencePath;
     CommonMethods common = CommonMethods.getInstance();
     float speed;
@@ -54,8 +54,11 @@ public class MyService extends Service {
     double haltStartLat = 0.0, haltStartLng = 0.0, currentLat = 0.0, currentLng = 0.0, previousLat, previousLng;
     private LocationCallback locationCallback;
     public static JSONObject jsonObjectLocationHistory = new JSONObject(), jsonObjectHalt = new JSONObject();
+    Context context;
+    boolean isGPSOpen = true;
 
     public MyService() {
+
     }
 
     @Override
@@ -63,19 +66,21 @@ public class MyService extends Service {
         throw new UnsupportedOperationException("Not yet implemented");
     }
 
-    @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        databaseReferencePath = common.getDatabaseForApplication(this);
-        preferences = getSharedPreferences("FirebasePath", MODE_PRIVATE);
+    private Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+            Log.d("TAG", "onStartCommand: check A ");
+            databaseReferencePath = common.getDatabaseForApplication(context);
+            preferences = getSharedPreferences("FirebasePath", MODE_PRIVATE);
 
-        String locationHistoryData = preferences.getString("LocationHistory","");
-        if (!locationHistoryData.equalsIgnoreCase("")) {
-            try {
-                jsonObjectLocationHistory = new JSONObject(locationHistoryData);
-            } catch (JSONException e) {
-                e.printStackTrace();
+            String locationHistoryData = preferences.getString("LocationHistory", "");
+            if (!locationHistoryData.equalsIgnoreCase("")) {
+                try {
+                    jsonObjectLocationHistory = new JSONObject(locationHistoryData);
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
             }
-        }
 
 //        String haltData = preferences.getString("HaltHistory","");
 //        if (!haltData.equalsIgnoreCase("")) {
@@ -86,19 +91,27 @@ public class MyService extends Service {
 //            }
 //        }
 
-        startTimersAndRelatedProcesses();
-        locationInfo = new Intent();
-        locationInfo.setAction("locationInfo");
-        mobileOffDataCaptured = false;
-        startForeground(1000,getNotification());
-        getLocationUpdates();
+            startTimersAndRelatedProcesses();
+            locationInfo = new Intent();
+            locationInfo.setAction("locationInfo");
+            mobileOffDataCaptured = false;
+            startForeground(1000, getNotification());
+            getLocationUpdates();
+        }
+    };
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        context = this;
+
+        Log.d("TAG", "onStartCommand: check ");
+        new Thread(runnable).start();
         return START_STICKY;
     }
 
     @SuppressLint("MissingPermission")
     public void getLocationUpdates() {
-        Log.d("TAG", "onStartCommand: check calling A");
-
+        Log.d("TAG", "onStartCommand: check B ");
         final LocationRequest locationRequest = new LocationRequest();
         locationRequest.setInterval(1000);
         locationRequest.setFastestInterval(1000);
@@ -112,7 +125,7 @@ public class MyService extends Service {
                     locationResult.getLocations().get(latestLocationIndex).getAccuracy();
                     currentLat = locationResult.getLocations().get(latestLocationIndex).getLatitude();
                     currentLng = locationResult.getLocations().get(latestLocationIndex).getLongitude();
-                    Log.d("TAG", "onLocationResult: check "+locationResult.getLocations().get(latestLocationIndex).getLatitude()+"    "+
+                    Log.d("TAG", "onLocationResult: check " + locationResult.getLocations().get(latestLocationIndex).getLatitude() + "    " +
                             locationResult.getLocations().get(latestLocationIndex).getLongitude());
                     speed = locationResult.getLocations().get(latestLocationIndex).getSpeed();
                     if (!isAppIsInBackground()) {
@@ -125,7 +138,7 @@ public class MyService extends Service {
                         locationInfo.putExtra("alertBox", "no");
                         sendBroadcast(locationInfo);
                     }
-                    if (preferences.getString("dutyOff", "").equalsIgnoreCase(common.date())&&preferences.getString("dutyIn", "").equalsIgnoreCase(common.date())) {
+                    if (preferences.getString("dutyOff", "").equalsIgnoreCase(common.date()) && preferences.getString("dutyIn", "").equalsIgnoreCase(common.date())) {
                         Log.d("TAG", "onLocationResult: check A ");
                         removeLocationListener();
                     }
@@ -136,20 +149,20 @@ public class MyService extends Service {
     }
 
     public void removeLocationListener() {
-        Log.d("TAG", "onLocationResult: check B "+currentLat);
+        Log.d("TAG", "onLocationResult: check B " + currentLat);
         if (locationCallback != null) {
             LocationServices.getFusedLocationProviderClient(MyService.this).removeLocationUpdates(locationCallback);
         }
     }
 
     private Notification getNotification() {
-        NotificationCompat.Builder noticationBuilder = null;
-        noticationBuilder = new NotificationCompat.Builder(getApplicationContext(),
+        NotificationCompat.Builder notificationBuilder = null;
+        notificationBuilder = new NotificationCompat.Builder(getApplicationContext(),
                 App.CHANNEL_ID)
                 .setContentTitle("Location Notification")
                 .setContentText("Location service is running in background.")
                 .setAutoCancel(true);
-        return noticationBuilder.build();
+        return notificationBuilder.build();
     }
 
     private void startTimersAndRelatedProcesses() {
@@ -169,44 +182,47 @@ public class MyService extends Service {
         StringBuilder traversalHistory = new StringBuilder();
         maxDistance = (int) Math.round(preferences.getInt("maxDistanceCoveredPerSecond", 0) * (Double.parseDouble(String.valueOf(preferences.getInt("pathTraverseArrayTime", 0))) / 1000));
         maxDistanceCanCover = maxDistance;
-        countDownTimerPath = new CountDownTimer(preferences.getInt("pathTraverseCaptureTime", 60000), preferences.getInt("pathTraverseArrayTime", 500)) {
-            @SuppressLint("MissingPermission")
-            public void onTick(long millisUntilFinished) {
-                if (currentLat != 0.0 && currentLng != 0.0) {
-                    if (previousLat == 0.0) {
+        ContextCompat.getMainExecutor(context).execute(() -> {
+            countDownTimerPath = new CountDownTimer(preferences.getInt("pathTraverseCaptureTime", 60000), preferences.getInt("pathTraverseArrayTime", 500)) {
+                @SuppressLint("MissingPermission")
+                public void onTick(long millisUntilFinished) {
+                    if (currentLat != 0.0 && currentLng != 0.0) {
+                        if (previousLat == 0.0) {
+                            previousLat = currentLat;
+                        }
+                        if (previousLng == 0.0) {
+                            previousLng = currentLng;
+                        }
+                        float[] pathDis = new float[1];
+                        Location.distanceBetween(previousLat, previousLng, currentLat, currentLng, pathDis);
+                        if (pathDis[0] > 0 && pathDis[0] < maxDistanceCanCover) {
+                            traversalHistory.append("(" + currentLat + "," + currentLng + ")~");
+                        } else if (pathDis[0] != 0) {
+                            maxDistanceCanCover = maxDistanceCanCover + maxDistance;
+                        }
                         previousLat = currentLat;
-                    }
-                    if (previousLng == 0.0) {
                         previousLng = currentLng;
                     }
-                    float[] pathDis = new float[1];
-                    Location.distanceBetween(previousLat, previousLng, currentLat, currentLng, pathDis);
-                    if (pathDis[0] > 0 && pathDis[0] < maxDistanceCanCover) {
-                        traversalHistory.append("(" + currentLat + "," + currentLng + ")~");
-                    } else if (pathDis[0] != 0) {
-                        maxDistanceCanCover = maxDistanceCanCover + maxDistance;
-                    }
-                    previousLat = currentLat;
-                    previousLng = currentLng;
                 }
-            }
 
-            @SuppressLint("SimpleDateFormat")
-            public void onFinish() {
-                if (!preferences.getString("dutyOff", "").equalsIgnoreCase(common.date())&&preferences.getString("dutyIn", "").equalsIgnoreCase(common.date())) {
-                    if (currentLat != 0.0 && currentLng != 0.0) {
-                        if (traversalHistory.length() == 0) {
-                            traversalHistory.append("(" + currentLat + "," + currentLng + ")~");
+                @SuppressLint("SimpleDateFormat")
+                public void onFinish() {
+                    Log.d("TAG", "onReceive: check jps 333 ");
+                    if (!preferences.getString("dutyOff", "").equalsIgnoreCase(common.date()) && preferences.getString("dutyIn", "").equalsIgnoreCase(common.date())) {
+                        if (currentLat != 0.0 && currentLng != 0.0) {
+                            if (traversalHistory.length() == 0) {
+                                traversalHistory.append("(" + currentLat + "," + currentLng + ")~");
+                            }
+                            saveLocationHistory(traversalHistory);
                         }
-                        saveLocationHistory(traversalHistory);
+                        if (!mobileOffDataCaptured) {
+                            checkLocationHistoryGapForMobileOff();
+                        }
+                        setPathTraversal();
                     }
-                    if (!mobileOffDataCaptured) {
-                        checkLocationHistoryGapForMobileOff();
-                    }
-                    setPathTraversal();
                 }
-            }
-        }.start();
+            }.start();
+        });
     }
 
     private void saveLocationHistory(StringBuilder traversalHistory) {
@@ -223,7 +239,7 @@ public class MyService extends Service {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        preferences.edit().putString("LocationHistory",jsonObjectLocationHistory.toString()).apply();
+        preferences.edit().putString("LocationHistory", jsonObjectLocationHistory.toString()).apply();
         locationDatabaseReference.child("/last-update-time").setValue(currentTime);
         locationDatabaseReference.child("/TotalCoveredDistance").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -278,40 +294,42 @@ public class MyService extends Service {
     private void haltIdentification() {
         int countDownInterval = preferences.getInt("distanceCoveredCheckInterval", 0) * 1000;
         float[] distance = new float[1];
-        countDownTimerTemp = new CountDownTimer(60000, countDownInterval) {
-            @SuppressLint("SimpleDateFormat")
-            public void onTick(long millisUntilFinished) {
-                if (haltStartLat == 0.0) {
-                    haltStartLat = currentLat;
-                }
-                if (haltStartLng == 0.0) {
-                    haltStartLng = currentLng;
-                }
-                Location.distanceBetween(haltStartLat, haltStartLng, currentLat, currentLng, distance);
-                requiredDistanceCovered = !(preferences.getInt("haltAllowedRange", 0) >= distance[0]);
-            }
-
-            @SuppressLint("SimpleDateFormat")
-            public void onFinish() {
-                if (!preferences.getString("dutyOff", "").equalsIgnoreCase(common.date())&&preferences.getString("dutyIn", "").equalsIgnoreCase(common.date())) {
-                    if (!requiredDistanceCovered) {
-                        if (isHaltAllowed(true)) {
-                            String currentTime = new SimpleDateFormat("HH:mm").format(new Date());
-                            haltDuration = haltDuration == 0 ? preferences.getInt("maxHaltAllowed", 0) : haltDuration + 1;
-                            if (haltStartLat != 0.0 && haltStartLng != 0.0) {
-                                saveHaltInfo("work-stopped", haltStartTime, currentTime, haltDuration, haltStartLat, haltStartLng);
-                            }
-                        }
-                    } else {
-                        haltStartTime = new SimpleDateFormat("HH:mm").format(new Date());
-                        haltDuration = 0;
+        ContextCompat.getMainExecutor(context).execute(() -> {
+            countDownTimerTemp = new CountDownTimer(60000, countDownInterval) {
+                @SuppressLint("SimpleDateFormat")
+                public void onTick(long millisUntilFinished) {
+                    if (haltStartLat == 0.0) {
                         haltStartLat = currentLat;
+                    }
+                    if (haltStartLng == 0.0) {
                         haltStartLng = currentLng;
                     }
-                    haltIdentification();
+                    Location.distanceBetween(haltStartLat, haltStartLng, currentLat, currentLng, distance);
+                    requiredDistanceCovered = !(preferences.getInt("haltAllowedRange", 0) >= distance[0]);
                 }
-            }
-        }.start();
+
+                @SuppressLint("SimpleDateFormat")
+                public void onFinish() {
+                    if (!preferences.getString("dutyOff", "").equalsIgnoreCase(common.date()) && preferences.getString("dutyIn", "").equalsIgnoreCase(common.date())) {
+                        if (!requiredDistanceCovered) {
+                            if (isHaltAllowed(true)) {
+                                String currentTime = new SimpleDateFormat("HH:mm").format(new Date());
+                                haltDuration = haltDuration == 0 ? preferences.getInt("maxHaltAllowed", 0) : haltDuration + 1;
+                                if (haltStartLat != 0.0 && haltStartLng != 0.0) {
+                                    saveHaltInfo("work-stopped", haltStartTime, currentTime, haltDuration, haltStartLat, haltStartLng);
+                                }
+                            }
+                        } else {
+                            haltStartTime = new SimpleDateFormat("HH:mm").format(new Date());
+                            haltDuration = 0;
+                            haltStartLat = currentLat;
+                            haltStartLng = currentLng;
+                        }
+                        haltIdentification();
+                    }
+                }
+            }.start();
+        });
     }
 
     private boolean isHaltAllowed(boolean isEqual) {
@@ -393,10 +411,8 @@ public class MyService extends Service {
                                                 previousTime = currentTime;
                                             }
                                             int timeGap = common.formatDate(previousTime, currentTime);
-
-                                            Log.d("TAG", "onDataChange: check BBBB " + timeGap);
                                             if (timeGap >= preferences.getInt("maxHaltAllowed", 0)) {
-                                                if (previousLatLng.length()>0) {
+                                                if (previousLatLng.length() > 0) {
                                                     String[] latLng = previousLatLng.replace("(", "").replace(")", "").split(",");
                                                     if (Double.parseDouble(latLng[0]) != 0.0 && Double.parseDouble(latLng[1]) != 0.0) {
                                                         saveHaltInfo("work-stopped", previousTime, currentTime, timeGap, Double.parseDouble(latLng[0]), Double.parseDouble(latLng[1]));
@@ -451,34 +467,53 @@ public class MyService extends Service {
     }
 
     private void setCurrentLocation() {
-        countDownTimerLocation = new CountDownTimer(preferences.getInt("currentLocationCaptureTime", 10000), 1000) {
-            public void onTick(long millisUntilFinished) {
-            }
+        Log.d("TAG", "onReceive: check jps 1 "+preferences.getInt("currentLocationCaptureTime", 10000));
+        ContextCompat.getMainExecutor(context).execute(() -> {
+            countDownTimerLocation = new CountDownTimer(preferences.getInt("currentLocationCaptureTime", 10000), 1000) {
+                @SuppressLint("MissingPermission")
+                public void onTick(long millisUntilFinished) {
 
-            @RequiresApi(api = Build.VERSION_CODES.O)
-            public void onFinish() {
-                if (!preferences.getString("dutyOff", "").equalsIgnoreCase(common.date())&&preferences.getString("dutyIn", "").equalsIgnoreCase(common.date())) {
-                    final LocationManager manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-                    if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-                        if (isAppIsInBackground()) {
-                            Intent i = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                            startActivity(i);
-                        } else {
-                            locationInfo.putExtra("lat", currentLat);
-                            locationInfo.putExtra("lng", currentLng);
-                            locationInfo.putExtra("speed", speed);
-                            locationInfo.putExtra("alertBox", "yes");
-                            sendBroadcast(locationInfo);
-                        }
-                    }
-                    if (currentLat != 0.0 && currentLat != 0.0) {
-                        databaseReferencePath.child("CurrentLocationInfo/" + preferences.getString("uid", "") + "/latLng").setValue("" + currentLat + "," + currentLng);
-                    }
-                    setCurrentLocation();
                 }
-            }
-        }.start();
+
+                @SuppressLint("SimpleDateFormat")
+                public void onFinish() {
+                    Log.d("TAG", "onReceive: check jps 333 ");
+                    if (!preferences.getString("dutyOff", "").equalsIgnoreCase(common.date()) && preferences.getString("dutyIn", "").equalsIgnoreCase(common.date())) {
+                        final LocationManager manager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                        Log.d("TAG", "onReceive: check jps 4 "+manager.isProviderEnabled(LocationManager.GPS_PROVIDER));
+                        if (isGPSOpen){
+                            if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                                isGPSOpen = false;
+                                new MapsRepo().sendActivityEvents("GPS Closed",common.getDatabaseForApplication(context),preferences);
+                            }
+                        }else {
+                            if (manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                                isGPSOpen = true;
+                                new MapsRepo().sendActivityEvents("GPS Open",common.getDatabaseForApplication(context),preferences);
+                            }
+                        }
+                        if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+                            if (isAppIsInBackground()) {
+                                Intent i = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                                i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(i);
+                            } else {
+                                locationInfo.putExtra("lat", currentLat);
+                                locationInfo.putExtra("lng", currentLng);
+                                locationInfo.putExtra("speed", speed);
+                                locationInfo.putExtra("alertBox", "yes");
+                                sendBroadcast(locationInfo);
+
+                            }
+                        }
+                        if (currentLat != 0.0 && currentLat != 0.0) {
+                            databaseReferencePath.child("CurrentLocationInfo/" + preferences.getString("uid", "") + "/latLng").setValue("" + currentLat + "," + currentLng);
+                        }
+                        setCurrentLocation();
+                    }
+                }
+            }.start();
+        });
     }
 
     @Override
@@ -510,7 +545,7 @@ public class MyService extends Service {
                     isInBackground = false;
                 }
             }
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         }
         return isInBackground;
     }

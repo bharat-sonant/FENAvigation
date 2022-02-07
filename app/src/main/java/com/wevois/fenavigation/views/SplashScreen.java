@@ -1,23 +1,22 @@
 package com.wevois.fenavigation.views;
 
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.databinding.DataBindingUtil;
 import androidx.lifecycle.ViewModelProviders;
 
+import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.view.View;
-import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
-import android.widget.Button;
-
 import com.wevois.fenavigation.R;
 import com.wevois.fenavigation.databinding.ActivitySplashScreenBinding;
 import com.wevois.fenavigation.viewmodels.SplashViewModel;
@@ -30,6 +29,23 @@ public class SplashScreen extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash_screen);
+        checkPermission();
+    }
+
+    public void checkPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!Settings.canDrawOverlays(this)) {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()));
+                startActivityForResult(intent, 1);
+            }else {
+                initMethod();
+            }
+        }else {
+            initMethod();
+        }
+    }
+
+    private void initMethod() {
         binding = DataBindingUtil.setContentView(this, R.layout.activity_splash_screen);
         viewModel = ViewModelProviders.of(this).get(SplashViewModel.class);
         binding.setSplashviewmodel(viewModel);
@@ -82,6 +98,7 @@ public class SplashScreen extends AppCompatActivity {
         }
     }
 
+    @TargetApi(Build.VERSION_CODES.M)
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -90,6 +107,13 @@ public class SplashScreen extends AppCompatActivity {
                 viewModel.checkPermission();
             } else {
                 viewModel.checkPermission();
+            }
+        }
+        if (requestCode == 1) {
+            if (!Settings.canDrawOverlays(this)) {
+                checkPermission();
+            }else {
+                initMethod();
             }
         }
     }

@@ -2,6 +2,8 @@ package com.wevois.fenavigation.repository;
 
 import static android.content.Context.MODE_PRIVATE;
 
+import static com.google.firebase.crashlytics.internal.Logger.TAG;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.SharedPreferences;
@@ -63,22 +65,17 @@ public class SplashRepository {
             });
         }).start();
         new Thread(() -> {
-            getFENavigationData(activity,preferences);
+            getFENavigationData(activity, preferences);
         }).start();
         new Thread(() -> {
-            Log.d("TAG", "getSettingsData: check data ");
             common.getStoRef(activity).child("Defaults/PreviousDayMessage.json").getMetadata().addOnSuccessListener(storageMetadata -> {
-                Log.d("TAG", "getSettingsData: check data A ");
                 long fileCreationTime = storageMetadata.getCreationTimeMillis();
                 long fileDownloadTime = preferences.getLong("PreviousDayMessageDownloadTime", 0);
-                Log.d("TAG", "getSettingsData: check data A1 "+fileCreationTime+"   "+fileDownloadTime);
                 if (fileDownloadTime != fileCreationTime) {
-                    Log.d("TAG", "getSettingsData: check data A2 "+fileCreationTime+"   "+fileDownloadTime);
                     common.getStoRef(activity).child("Defaults/PreviousDayMessage.json").getBytes(10000000).addOnSuccessListener(taskSnapshot -> {
                         try {
                             String str = new String(taskSnapshot, StandardCharsets.UTF_8);
                             preferences.edit().putString("PreviousDayMessage", str).apply();
-                            Log.d("TAG", "getSettingsData: check data A3 "+fileCreationTime+"   "+fileDownloadTime+"   "+str);
                             preferences.edit().putLong("PreviousDayMessageDownloadTime", fileCreationTime).apply();
                         } catch (Exception e) {
                             e.printStackTrace();

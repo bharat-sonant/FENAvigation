@@ -6,7 +6,6 @@ import static android.content.Context.MODE_PRIVATE;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
-
 import androidx.annotation.NonNull;
 import androidx.lifecycle.ViewModel;
 
@@ -24,9 +23,10 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.ValueEventListener;
 import com.wevois.fenavigation.CommonMethods;
+import com.wevois.fenavigation.repository.SplashRepository;
 import com.wevois.fenavigation.views.DutyIn;
-import com.wevois.fenavigation.views.HomeMapsActivity;
 import com.wevois.fenavigation.views.LoginScreen;
+import com.wevois.fenavigation.views.Maps;
 
 import java.util.HashMap;
 import java.util.Objects;
@@ -117,13 +117,14 @@ public class LoginViewModel extends ViewModel {
             preferences.edit().putString("uid", user.getUid()).apply();
             preferences.edit().putString("name", Objects.requireNonNull(user).getDisplayName()).apply();
             preferences.edit().putString("email", user.getEmail()).apply();
+            new SplashRepository().getFENavigationData(activity,preferences);
             common.getDatabaseForApplication(activity).child("FEAttendance").child(user.getUid()).child(common.year()).child(common.monthName()).child(common.date()).child("inDetails").addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                     preferences.edit().putString("loggedIn", "1").apply();
                     if (snapshot.hasChild("time")) {
                         preferences.edit().putString("dutyIn", common.date()).apply();
-                        activity.startActivity(new Intent(activity, HomeMapsActivity.class));
+                        activity.startActivity(new Intent(activity, Maps.class));
                     } else {
                         activity.startActivity(new Intent(activity, DutyIn.class));
                     }
